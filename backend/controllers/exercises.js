@@ -22,22 +22,25 @@ exercisesRouter.get('/:id', (req, res, next) => {
 
 exercisesRouter.delete('/:id', (req, res, next) => {
   Exercise.findByIdAndRemove(req.params.id)
-    .then(res => {
+    .then(() => {
       res.status(204).end()
     })
     .catch(error => next(error))
 })
 
-exercisesRouter.post('/api/exercises', (req, res, next) => {
+exercisesRouter.post('/', (req, res, next) => {
   const body = req.body
 
   const exercise = new Exercise({
     movement: body.movement,
+    class: body.class,
+    type: body.type
   })
 
-  exercise.save().then(savedExercise => {
-    res.json(savedExercise)
-  })
+  exercise.save()
+    .then(savedExercise => {
+      res.status(201).json(savedExercise)
+    })
     .catch(error => next(error))
 })
 

@@ -1,0 +1,1 @@
+DELETE http://localhost:3001/api/exercises/64161f515bb52ed1561838c8

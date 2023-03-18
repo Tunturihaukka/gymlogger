@@ -2,5 +2,7 @@ POST http://localhost:3001/api/exercises
 Content-Type: application/json
 
 {
-    "movement": "bench press"
+    //"movement": "bench press",
+    "class": "chest",
+    "type": "barbell"
 }
