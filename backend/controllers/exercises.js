@@ -2,33 +2,27 @@ const exercisesRouter = require('express').Router()
 const Exercise = require('../models/exercise')
 
 
-exercisesRouter.get('/', (req, res) => {
-  Exercise.find({}).then(exercises => {
+exercisesRouter.get('/', async (req, res) => {
+  await Exercise.find({}).then(exercises => {
     res.json(exercises)
   })
 })
 
-exercisesRouter.get('/:id', (req, res, next) => {
-  Exercise.findById(req.params.id)
-    .then(exercise => {
-      if (exercise) {
-        res.json(exercise)
-      } else {
-        res.status(404).end()
-      }
-    })
-    .catch(error => next(error))
+exercisesRouter.get('/:id', async (req, res) => {
+  const exercise = await Exercise.findById(req.params.id)
+  if (exercise) {
+    res.json(exercise)
+  } else {
+    res.status(404).end()
+  }
 })
 
-exercisesRouter.delete('/:id', (req, res, next) => {
-  Exercise.findByIdAndRemove(req.params.id)
-    .then(() => {
-      res.status(204).end()
-    })
-    .catch(error => next(error))
+exercisesRouter.delete('/:id', async (req, res) => {
+  await Exercise.findByIdAndRemove(req.params.id)
+  res.status(204).end()
 })
 
-exercisesRouter.post('/', (req, res, next) => {
+exercisesRouter.post('/', async (req, res) => {
   const body = req.body
 
   const exercise = new Exercise({
@@ -37,11 +31,8 @@ exercisesRouter.post('/', (req, res, next) => {
     type: body.type
   })
 
-  exercise.save()
-    .then(savedExercise => {
-      res.status(201).json(savedExercise)
-    })
-    .catch(error => next(error))
+  const savedExercise = await exercise.save()
+  res.status(201).json(savedExercise)
 })
 
 module.exports = exercisesRouter
