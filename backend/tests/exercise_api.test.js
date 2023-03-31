@@ -1,29 +1,15 @@
 const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
-
 const api = supertest(app)
 const Exercise = require('../models/exercise')
-
-const initialExercises = [
-
-  {
-    movement: 'bench press',
-    class: 'chest',
-    type: 'barbell'
-  },
-  {
-    movement: 'deadlift',
-    class: 'back',
-    type: 'barbell'
-  }
-]
+const helper = require('./test_helper')
 
 beforeEach(async () => {
   await Exercise.deleteMany({})
-  let exObject = new Exercise(initialExercises[0])
+  let exObject = new Exercise(helper.initialExercises[0])
   await exObject.save()
-  exObject = new Exercise(initialExercises[1])
+  exObject = new Exercise(helper.initialExercises[1])
   await exObject.save()
 })
 
@@ -44,7 +30,7 @@ test('adding a valid exercise succeeds', async () => {
 
   const movements = response.body.map(r => r.movement)
 
-  expect(response.body).toHaveLength(initialExercises.length + 1)
+  expect(response.body).toHaveLength(helper.initialLength + 1)
   expect(movements).toContain(
     'squat'
   )
@@ -64,7 +50,7 @@ test('adding an exercise without the movement', async () => {
 
   const response = await api.get('/api/exercises')
 
-  expect(response.body).toHaveLength(initialExercises.length)
+  expect(response.body).toHaveLength(helper.initialLength)
 })
 
 test('adding an exercise with a too long movement', async () => {
@@ -83,7 +69,7 @@ test('adding an exercise with a too long movement', async () => {
 
   const movements = response.body.map(r => r.movement)
 
-  expect(response.body).toHaveLength(initialExercises.length)
+  expect(response.body).toHaveLength(helper.initialLength)
   expect(movements).not.toContain(
     'quat123456789012345678910'
   )
@@ -105,7 +91,7 @@ test('adding an exercise with an improper class', async () => {
 
   const movements = response.body.map(r => r.movement)
 
-  expect(response.body).toHaveLength(initialExercises.length)
+  expect(response.body).toHaveLength(helper.initialLength)
   expect(movements).not.toContain(
     'squat'
   )
@@ -114,24 +100,20 @@ test('adding an exercise with an improper class', async () => {
 //----
 
 test('requesting a single valid exercise by id', async () => {
-  const response = await api.get('/api/exercises')
-  const id = response.body[0].id
+  const db = await helper.exercisesInDb()
+  const id = db[0].id
 
   await api
     .get(`/api/exercises/${id}`)
     .expect(200)
     .expect('Content-Type', /application\/json/)
 
-  expect(response.body[0].movement).toBe('bench press')
-
 })
 
+
+
 test('requesting a single non-existing exercise by id', async () => {
-
-  const response = await api.get('/api/exercises')
-  const id = response.body[0].id
-
-  await api.delete(`/api/exercises/${id}`)
+  const id = await helper.nonExistingId()
 
   await api
     .get(`/api/exercises/${id}`)
@@ -142,7 +124,7 @@ test('requesting a single non-existing exercise by id', async () => {
 test('requesting a single exercise with malformatted id', async () => {
 
   await api
-    .get('/api/exercises/52389u5v928ut1nv9809v')
+    .get(`/api/exercises/${helper.malformattedId}`)
     .expect(400)
 })
 
@@ -158,7 +140,7 @@ test('exercises are returned as json', async () => {
 test('there are correct amount of exercises', async () => {
   const response = await api.get('/api/exercises')
 
-  expect(response.body).toHaveLength(initialExercises.length)
+  expect(response.body).toHaveLength(helper.initialLength)
 })
 
 test('1st initial exercise is within the returned exercises', async () => {
@@ -167,7 +149,7 @@ test('1st initial exercise is within the returned exercises', async () => {
   const movements = response.body.map(r => r.movement)
 
   expect(movements).toContain(
-    'bench press'
+    helper.initialExercises[0].movement
   )
 })
 
@@ -175,10 +157,7 @@ test('1st initial exercise is within the returned exercises', async () => {
 //----
 
 test('deleting a non-existing exercise', async () => {
-  const response = await api.get('/api/exercises')
-  const id = response.body[0].id
-
-  await api.delete(`/api/exercises/${id}`)
+  const id = await helper.nonExistingId()
 
   await api
     .delete(`/api/exercises/${id}`)
@@ -187,26 +166,25 @@ test('deleting a non-existing exercise', async () => {
 })
 
 test('deleting an exercise with malformatted id', async () => {
-  const response = await api.get('/api/exercises')
   await api
-    .delete('/api/exercises/52389u5v928ut1nv9809v')
+    .delete(`/api/exercises/${helper.malformattedId}`)
     .expect(400)
 
-  expect(response.body).toHaveLength(initialExercises.length)
+  const response = await api.get('/api/exercises')
+  expect(response.body).toHaveLength(helper.initialLength)
 })
 
 test('deleting a valid exercise', async () => {
-  const initResponse = await api.get('/api/exercises')
-  const id = initResponse.body[0].id
+  const db = await helper.exercisesInDb()
+  const id = db[0].id
 
   await api
     .delete(`/api/exercises/${id}`)
     .expect(204)
 
   const response = await api.get('/api/exercises')
-  expect(response.body).toHaveLength(initialExercises.length - 1)
+  expect(response.body).toHaveLength(helper.initialLength - 1)
 })
-
 
 
 afterAll(async () => {
