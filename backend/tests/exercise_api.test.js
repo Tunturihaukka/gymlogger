@@ -27,7 +27,7 @@ beforeEach(async () => {
   await exObject.save()
 })
 
-test('adding a valid exercise', async () => {
+test('adding a valid exercise succeeds', async () => {
   const newExercise = {
     movement: 'squat',
     class: 'legs',
@@ -67,7 +67,7 @@ test('adding an exercise without the movement', async () => {
   expect(response.body).toHaveLength(initialExercises.length)
 })
 
-test('adding an exercise with a too long movement name', async () => {
+test('adding an exercise with a too long movement', async () => {
   const newExercise = {
     movement: 'squat123456789012345678910',
     class: 'legs',
@@ -85,7 +85,7 @@ test('adding an exercise with a too long movement name', async () => {
 
   expect(response.body).toHaveLength(initialExercises.length)
   expect(movements).not.toContain(
-    'squat1234567890'
+    'quat123456789012345678910'
   )
 })
 
@@ -126,7 +126,7 @@ test('requesting a single valid exercise by id', async () => {
 
 })
 
-test('requesting a single invalid exercise by id', async () => {
+test('requesting a single non-existing exercise by id', async () => {
 
   const response = await api.get('/api/exercises')
   const id = response.body[0].id
@@ -161,7 +161,7 @@ test('there are correct amount of exercises', async () => {
   expect(response.body).toHaveLength(initialExercises.length)
 })
 
-test('bench press is within the returned exercises', async () => {
+test('1st initial exercise is within the returned exercises', async () => {
   const response = await api.get('/api/exercises')
 
   const movements = response.body.map(r => r.movement)
@@ -175,7 +175,24 @@ test('bench press is within the returned exercises', async () => {
 //----
 
 test('deleting a non-existing exercise', async () => {
+  const response = await api.get('/api/exercises')
+  const id = response.body[0].id
 
+  await api.delete(`/api/exercises/${id}`)
+
+  await api
+    .delete(`/api/exercises/${id}`)
+    .expect(204)
+
+})
+
+test('deleting an exercise with malformatted id', async () => {
+  const response = await api.get('/api/exercises')
+  await api
+    .delete('/api/exercises/52389u5v928ut1nv9809v')
+    .expect(400)
+
+  expect(response.body).toHaveLength(initialExercises.length)
 })
 
 test('deleting a valid exercise', async () => {
